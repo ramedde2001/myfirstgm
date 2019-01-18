@@ -1,0 +1,139 @@
+<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+var background=new Image();
+background.src="image/bg5.jpg"
+var img=new Image();
+img.src="image/spaceship.png"
+var enemyImg=new Image();
+enemyImg.src="image/astroid.png"
+var bulletimg=new Image();
+bulletimg.src="image/bullet.png"
+class move
+{
+constructor(id,ev)
+{
+this.id=id;
+this.ev=ev;
+}
+
+}
+class bullet 
+{
+	constructor(id,x,z)
+	{
+	
+		this.id=id;
+		this.x=x;
+		this.z=z;
+		this.spx=10;
+		this.spz=0
+		
+	}
+	colide(p)
+{
+	if(this.getdistence(p)<10)
+		if(this.id==p.id)
+		return false;
+		else
+		return true
+	else 
+		return false;
+	
+}
+getdistence(p)
+{
+	var vec={x:p.x-this.x,z:p.z-this.z}
+var lent=Math.sqrt(vec.x*vec.x+vec.z*vec.z);
+return lent;
+	
+}
+	move()
+	{
+		this.x=this.x+this.spx;
+		this.z=this.z+this.spz;
+	}
+
+	
+}
+class player {
+constructor()
+{
+this.x=Math.random()*500;
+
+this.z=Math.random()*500;
+}
+}
+var edx=document.getElementById("ctx").getContext("2d")
+  var socket = io();
+  var myid;
+  socket.on('connect', function() {
+  myid=  socket.io.engine.id;
+  
+  }
+  )
+  var p=new player();
+ socket.emit("player",p);
+ var bu=[];
+ socket.on("drowb",function(b){
+ bu=b;
+ 
+ })
+ var players
+ socket.on("drow",function(p)
+ {
+ var hit=false;
+players=p;
+edx.clearRect(0,0,500,500);
+
+players.forEach(function(element){
+
+edx.drawImage(img, element.x-10, element.z-10,20,20);
+if(element.id==myid)
+edx.fillText(element.healt,10,10);
+
+})
+bu.forEach(function(element){
+
+edx.drawImage(bulletimg,0,0,15,19,element.x-10, element.z-10,15,15);
+
+})
+ bu.forEach(function(bul){
+players.forEach(function(element){
+var b=new bullet(bul.id,bul.x,bul.z)
+
+if(b.colide(element))
+{
+if(hit==false)
+socket.emit("hit",element);
+ hit=true;
+}
+
+
+})
+
+
+})
+
+ })
+ function mousehnd(e)
+{ 
+var r = this.getBoundingClientRect();
+ var pos = {
+       x : e.pageX-r.left,
+       y : e.pageY-r.top ,
+	   id:myid
+   };
+socket.emit("shot",pos);
+
+}
+ function hunkey(ev)
+ {
+ var mov=new move(myid,ev.key);
+ socket.emit("move",mov);
+ }
+ document.onkeydown=hunkey;
+ document.getElementById("ctx").addEventListener('click', mousehnd, false);
+</script>
